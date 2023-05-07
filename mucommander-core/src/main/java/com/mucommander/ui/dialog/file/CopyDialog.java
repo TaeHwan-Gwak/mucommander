@@ -22,9 +22,7 @@ import com.mucommander.commons.file.protocol.search.SearchFile;
 import com.mucommander.commons.file.util.FileSet;
 import com.mucommander.commons.util.ui.dialog.DialogToolkit;
 import com.mucommander.commons.util.ui.layout.YBoxPanel;
-import com.mucommander.desktop.ActionType;
 import com.mucommander.text.Translator;
-import com.mucommander.ui.action.ActionProperties;
 import com.mucommander.ui.main.MainFrame;
 
 import javax.swing.*;
