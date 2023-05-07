@@ -145,6 +145,13 @@ public class DialogToolkit {
     }
 
     /**
+     * Creates an two OK/Cancel panel using the given buttons, and register the given listener for button actions.
+     */
+    public static JPanel createTwoOKCancelPanel(JButton okButton1, JButton okButton2, JButton cancelButton, JRootPane rootPane, ActionListener actionListener) {
+        return createButtonPanel(Arrays.asList(okButton1, okButton2, cancelButton), rootPane, actionListener);
+    }
+
+    /**
      * Creates an OK panel using the given button, and register the given listener for button actions.
      */
     public static JPanel createOKPanel(JButton okButton, JRootPane rootPane, ActionListener actionListener) {

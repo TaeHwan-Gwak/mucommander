@@ -35,8 +35,8 @@ public class MoveDialog extends JobDialog implements ActionListener {
     /**
      * The button that confirms git restore (--staged)
      */
-    private JButton restoreButton; // - restore
-    private JButton reStButton; // - restore --staged
+    private JButton re_Button; // - restore
+    private JButton re_st_Button; // - restore --staged
 
     /**
      * Dialog size constraints
@@ -64,19 +64,19 @@ public class MoveDialog extends JobDialog implements ActionListener {
         JPanel fileDetailsPanel = createFileDetailsPanel();
 
         // Create file details button and restore/restore --staged/cancel buttons and lay them out a single row
-        restoreButton = new JButton(Translator.get("restore"));
+        re_Button = new JButton(Translator.get("restore"));
         JButton cancelButton = new JButton(Translator.get("cancel"));
-        reStButton = new JButton(Translator.get("staged"));
+        re_st_Button = new JButton(Translator.get("staged"));
 
         mainPanel.add(createButtonsPanel(createFileDetailsButton(fileDetailsPanel),
-                DialogToolkit.createOKCancelPanel(restoreButton, cancelButton, getRootPane(), this)));
+                DialogToolkit.createTwoOKCancelPanel(re_Button, re_st_Button, cancelButton, getRootPane(), this)));
 
         mainPanel.add(fileDetailsPanel);
 
         getContentPane().add(mainPanel);
 
         // Give initial keyboard focus to the 'Delete' button
-        setInitialFocusComponent(restoreButton);
+        setInitialFocusComponent(re_Button);
 
         // Call dispose() when dialog is closed
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -90,7 +90,7 @@ public class MoveDialog extends JobDialog implements ActionListener {
         // Start by disposing this dialog
         dispose();
 
-        if (e.getSource() == restoreButton) {
+        if (e.getSource() == re_Button) {
             try {
                 String base = files.elementAt(0).getPath();
                 String basefile = files.elementAt(0).getName();
@@ -109,7 +109,7 @@ public class MoveDialog extends JobDialog implements ActionListener {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-        } else if (e.getSource() == reStButton) {
+        } else if (e.getSource() == re_st_Button) {
             try {
                 String base = files.elementAt(0).getPath();
                 String basefile = files.elementAt(0).getName();
