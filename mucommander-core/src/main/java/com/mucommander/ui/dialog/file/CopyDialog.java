@@ -60,7 +60,7 @@ public class CopyDialog extends JobDialog implements ActionListener {
             baseFolder = ((SearchFile) baseFolder.getUnderlyingFileObject()).getSearchPlace();
 
         // - make Jlabel(has text) and then add to mainPanel
-        JLabel informationPane = new JLabel("Are you sure to do 'git add'?");
+        JLabel informationPane = new JLabel("Are you sure to do 'git add'?'");
         mainPanel.add(informationPane);
         mainPanel.addSpace(10);
 
