@@ -33,16 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 
-
-/**
- * Dialog invoked when the user wants to copy currently selected files. The destination field is pre-filled with
- * the 'other' panel's path and, if there is only one file to copy, with the source file's name.
- *
- * @see com.mucommander.ui.action.impl.CopyAction
- * @author Maxence Bernard
- */
 public class CopyDialog extends JobDialog implements ActionListener {
-
     /**
      * Creates a new <code>CopyDialog</code>.
      *
@@ -56,12 +47,11 @@ public class CopyDialog extends JobDialog implements ActionListener {
     public CopyDialog(MainFrame mainFrame, FileSet files) {
         super(mainFrame, "Git Add", files);
 
+        // - mainFrame
         this.mainFrame = mainFrame;
 
         YBoxPanel mainPanel = new YBoxPanel();
 
-        // Allow 'Move to trash' option only if:
-        // - the current platform has a trash
         // - the base folder is not an archive
         // - the base folder of the to-be-deleted files is not a trash folder or one of its children
         // - the base folder can be moved to the trash (the eligibility conditions should be the same as the files to-be-deleted)
@@ -69,13 +59,14 @@ public class CopyDialog extends JobDialog implements ActionListener {
         if (baseFolder.getURL().getScheme().equals(SearchFile.SCHEMA))
             baseFolder = ((SearchFile) baseFolder.getUnderlyingFileObject()).getSearchPlace();
 
-        JLabel informationPane = new JLabel("you want git add ??");
+        // - make Jlabel(has text) and then add to mainPanel
+        JLabel informationPane = new JLabel("Are you sure to do 'git add'?");
         mainPanel.add(informationPane);
         mainPanel.addSpace(10);
 
         JPanel fileDetailsPanel = createFileDetailsPanel();
 
-        // Create file details button and OK/cancel buttons and lay them out a single row
+        // Create file details button and add/cancel button and lay them out a single row
         addButton = new JButton(Translator.get("add"));
         JButton cancelButton = new JButton(Translator.get("cancel"));
 
@@ -101,6 +92,7 @@ public class CopyDialog extends JobDialog implements ActionListener {
         // Start by disposing this dialog
         dispose();
 
+        // case press add button
         if(e.getSource()== addButton) {
             try
             {
@@ -111,17 +103,17 @@ public class CopyDialog extends JobDialog implements ActionListener {
                 String addCommand = "git add ";
 
                 for(int i = 0;i<files.size();i++) {
+                    // execute git add command
                     String file = files.elementAt(i).getName();
                     String cmd = "cd "+ path + " && " + addCommand + file;
-                    Process p;
 
+                    Process p;
                     String[] command = {"/bin/sh","-c", cmd};
                     p = Runtime.getRuntime().exec(command);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
-
         }
     }
 }
