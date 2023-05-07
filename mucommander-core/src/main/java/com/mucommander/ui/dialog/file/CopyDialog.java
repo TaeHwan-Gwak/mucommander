@@ -15,28 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 package com.mucommander.ui.dialog.file;
 
-import java.util.List;
-import java.util.Vector;
-
 import com.mucommander.commons.file.AbstractFile;
-import com.mucommander.commons.file.archive.AbstractArchiveEntryFile;
-import com.mucommander.commons.file.archive.AbstractArchiveFile;
-import com.mucommander.commons.file.archive.ArchiveEntry;
-import com.mucommander.commons.file.util.DestinationType;
+import com.mucommander.commons.file.protocol.search.SearchFile;
 import com.mucommander.commons.file.util.FileSet;
-import com.mucommander.commons.file.util.PathUtils;
+import com.mucommander.commons.util.ui.dialog.DialogToolkit;
+import com.mucommander.commons.util.ui.layout.YBoxPanel;
 import com.mucommander.desktop.ActionType;
-import com.mucommander.job.impl.CopyJob;
-import com.mucommander.job.impl.CopyJob.TransferMode;
-import com.mucommander.job.impl.TransferFileJob;
-import com.mucommander.job.impl.UnpackJob;
 import com.mucommander.text.Translator;
 import com.mucommander.ui.action.ActionProperties;
-import com.mucommander.ui.action.impl.CopyAction;
 import com.mucommander.ui.main.MainFrame;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.*;
 
 
 /**
@@ -46,7 +41,7 @@ import com.mucommander.ui.main.MainFrame;
  * @see com.mucommander.ui.action.impl.CopyAction
  * @author Maxence Bernard
  */
-public class CopyDialog extends AbstractCopyDialog {
+public class CopyDialog extends JobDialog implements ActionListener {
 
     /**
      * Creates a new <code>CopyDialog</code>.
@@ -54,63 +49,79 @@ public class CopyDialog extends AbstractCopyDialog {
      * @param mainFrame the main frame that spawned this dialog.
      * @param files files to be copied
      */
+
+    private JButton addButton;
+    private final static Dimension MINIMUM_DIALOG_DIMENSION = new Dimension(360,0);
+
     public CopyDialog(MainFrame mainFrame, FileSet files) {
-        super(mainFrame, files,
-              ActionProperties.getActionLabel(ActionType.Copy),
-              Translator.get("copy_dialog.destination"),
-              Translator.get("copy"),
-              Translator.get("copy_dialog.error_title"));
+        super(mainFrame, "Git Add", files);
+
+        this.mainFrame = mainFrame;
+
+        YBoxPanel mainPanel = new YBoxPanel();
+
+        // Allow 'Move to trash' option only if:
+        // - the current platform has a trash
+        // - the base folder is not an archive
+        // - the base folder of the to-be-deleted files is not a trash folder or one of its children
+        // - the base folder can be moved to the trash (the eligibility conditions should be the same as the files to-be-deleted)
+        AbstractFile baseFolder = files.getBaseFolder();
+        if (baseFolder.getURL().getScheme().equals(SearchFile.SCHEMA))
+            baseFolder = ((SearchFile) baseFolder.getUnderlyingFileObject()).getSearchPlace();
+
+        JLabel informationPane = new JLabel("you want git add ??");
+        mainPanel.add(informationPane);
+        mainPanel.addSpace(10);
+
+        JPanel fileDetailsPanel = createFileDetailsPanel();
+
+        // Create file details button and OK/cancel buttons and lay them out a single row
+        addButton = new JButton(Translator.get("add"));
+        JButton cancelButton = new JButton(Translator.get("cancel"));
+
+        mainPanel.add(createButtonsPanel(createFileDetailsButton(fileDetailsPanel),
+                DialogToolkit.createOKCancelPanel(addButton, cancelButton, getRootPane(), this)));
+
+        mainPanel.add(fileDetailsPanel);
+
+        getContentPane().add(mainPanel);
+
+        // Give initial keyboard focus to the 'Delete' button
+        setInitialFocusComponent(addButton);
+
+        // Call dispose() when dialog is closed
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
+        // Size dialog and show it to the screen
+        setMinimumSize(MINIMUM_DIALOG_DIMENSION);
+        setResizable(false);
     }
 
+    public void actionPerformed(ActionEvent e) {
+        // Start by disposing this dialog
+        dispose();
 
-    //////////////////////////////////////////////
-    // TransferDestinationDialog implementation //
-    //////////////////////////////////////////////
+        if(e.getSource()== addButton) {
+            try
+            {
+                String base = files.elementAt(0).getPath();
+                String basefile = files.elementAt(0).getName();
+                String path = base.replace(basefile, "");
 
-    @Override
-    protected TransferFileJob createTransferFileJob(ProgressDialog progressDialog, PathUtils.ResolvedDestination resolvedDest, FileCollisionDialog.FileCollisionAction defaultFileExistsAction) {
-        AbstractFile baseFolder = files.getBaseFolder();
-        AbstractArchiveFile parentArchiveFile = baseFolder.getParentArchive();
-        TransferFileJob job;
-        String newName = resolvedDest.getDestinationType()==DestinationType.EXISTING_FOLDER?null:resolvedDest.getDestinationFile().getName();
+                String addCommand = "git add ";
 
-        // If the source files are located inside an archive, use UnpackJob instead of CopyJob to unpack archives in
-        // their natural order (more efficient)
-        if(parentArchiveFile!=null) {
-            // Add all selected archive entries to a vector
-            int nbFiles = files.size();
-            List<ArchiveEntry> selectedEntries = new Vector<ArchiveEntry>();
-            for(int i=0; i<nbFiles; i++) {
-                selectedEntries.add((ArchiveEntry)files.elementAt(i).getAncestor(AbstractArchiveEntryFile.class).getUnderlyingFileObject());
+                for(int i = 0;i<files.size();i++) {
+                    String file = files.elementAt(i).getName();
+                    String cmd = "cd "+ path + " && " + addCommand + file;
+                    Process p;
+
+                    String[] command = {"/bin/sh","-c", cmd};
+                    p = Runtime.getRuntime().exec(command);
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
 
-            job = new UnpackJob(
-                progressDialog,
-                mainFrame,
-                parentArchiveFile,
-                PathUtils.getDepth(baseFolder.getAbsolutePath(), baseFolder.getSeparator()) - PathUtils.getDepth(parentArchiveFile.getAbsolutePath(), parentArchiveFile.getSeparator()),
-                resolvedDest.getDestinationFolder(),
-                newName,
-                defaultFileExistsAction,
-                selectedEntries
-            );
         }
-        else {
-            job = new CopyJob(
-                progressDialog,
-                mainFrame,
-                files,
-                resolvedDest.getDestinationFolder(),
-                newName,
-                TransferMode.COPY,
-                defaultFileExistsAction);
-        }
-
-        return job;
-    }
-
-    @Override
-    protected String getProgressDialogTitle() {
-        return Translator.get("copy_dialog.copying");
     }
 }
